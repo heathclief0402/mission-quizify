@@ -2,7 +2,7 @@ import streamlit as st
 import os
 import sys
 import json
-sys.path.append(os.path.abspath('../../'))
+sys.path.append(os.path.abspath(r'C:\Users\81087\Desktop\radicalAI\workspace\mission-quizify'))
 from tasks.task_3.task_3 import DocumentProcessor
 from tasks.task_4.task_4 import EmbeddingClient
 from tasks.task_5.task_5 import ChromaCollectionCreator
@@ -41,7 +41,7 @@ class QuizGenerator:
             3. Provide the correct answer for the question from the list of answers as key "answer"
             4. Provide an explanation as to why the answer is correct as key "explanation"
             
-            You must respond as a JSON object with the following structure:
+            You must respond as following structure, DO NOT make it in JSON markdown format:
             {{
                 "question": "<question>",
                 "choices": [
@@ -122,26 +122,34 @@ class QuizGenerator:
         Note: This method relies on `generate_question_with_vectorstore` for question generation and `validate_question` for ensuring question uniqueness. Ensure `question_bank` is properly initialized and managed.
         """
         self.question_bank = [] # Reset the question bank
-
+        retries = 0
+        retry_limit = 100
         for _ in range(self.num_questions):
             ##### YOUR CODE HERE #####
-            question_str = # Use class method to generate question
+            
+            while retries < retry_limit: 
+                question_str = self.generate_question_with_vectorstore()
             
             ##### YOUR CODE HERE #####
-            try:
+                try:
                 # Convert the JSON String to a dictionary
-            except json.JSONDecodeError:
-                print("Failed to decode question JSON.")
-                continue  # Skip this iteration if JSON decoding fails
+                    question = json.loads(question_str)
+                except json.JSONDecodeError:
+                    print("Failed to decode question JSON.")
+                    continue  # Skip this iteration if JSON decoding fails
             ##### YOUR CODE HERE #####
 
             ##### YOUR CODE HERE #####
             # Validate the question using the validate_question method
-            if self.validate_question(question):
-                print("Successfully generated unique question")
+                if self.validate_question(question):
+                    print("Successfully generated unique question")
+                    self.question_bank.append(question)
+                    break
                 # Add the valid and unique question to the bank
-            else:
-                print("Duplicate or invalid question detected.")
+                else:
+                    print("Duplicate or invalid question detected.")
+                    retries+=1
+
             ##### YOUR CODE HERE #####
 
         return self.question_bank
@@ -170,6 +178,12 @@ class QuizGenerator:
         # Consider missing 'question' key as invalid in the dict object
         # Check if a question with the same text already exists in the self.question_bank
         ##### YOUR CODE HERE #####
+        is_unique = True
+        new_question = question.get("question")
+        for questions in self.question_bank: 
+            if new_question == questions.get("question"): 
+                is_unique = False
+
         return is_unique
 
 
@@ -178,8 +192,8 @@ if __name__ == "__main__":
     
     embed_config = {
         "model_name": "textembedding-gecko@003",
-        "project": "YOUR-PROJECT-ID-HERE",
-        "location": "us-central1"
+        "project": "avian-bird-420505",
+        "location": "us-east1"
     }
     
     screen = st.empty()
